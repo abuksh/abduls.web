@@ -1,6 +1,6 @@
 import {Component, inject, OnInit, signal} from '@angular/core';
 import {CustomerService} from '../../core/customer.service';
-import {Customer, CustomerSummaryWithBalances} from '../../core/models';
+import { CustomerSummaryWithBalances} from '../../core/models';
 
 @Component({
   selector: 'app-list',
