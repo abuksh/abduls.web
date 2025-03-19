@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, inject, OnInit, signal, ViewChild} from '@angular/core';
+import {Component, computed, effect, inject, OnDestroy, OnInit, Signal, signal} from '@angular/core';
 import {ActivatedRoute, ParamMap, Router} from '@angular/router';
 import {CustomerInvoiceService} from '../../core/customer-invoice.component';
 import {Subscription, switchMap} from 'rxjs';
@@ -6,33 +6,33 @@ import {CustomerService} from '../../core/customer.service';
 import {Customer, CustomerInvoicesViewModel} from '../../core/models';
 import {CurrencyPipe, DatePipe} from '@angular/common';
 import {MatTableDataSource, MatTableModule} from '@angular/material/table';
-import {MatSort, MatSortModule} from '@angular/material/sort';
 import {MatCheckboxModule} from '@angular/material/checkbox';
 import {SelectionModel} from '@angular/cdk/collections';
 
 @Component({
   selector: 'app-customer-detail',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DatePipe,
     CurrencyPipe,
     MatTableModule,
-    MatSortModule,
     MatCheckboxModule,
-    CurrencyPipe
   ],
   template: `
-    <h1>Customer Detail</h1>
     @if (customer()) {
-      <div class="customer-details">
-        <div><strong>Name:</strong> {{ this.customer()?.name }}</div>
-        <div><strong>Address:</strong> {{ this.customer()?.street }} {{ this.customer()?.city }} {{ this.customer()?.postCode }}</div>
-        <div><strong>Contact:</strong> {{ this.customer()?.email }} | {{ this.customer()?.telephone }}</div>
-      </div>
+      <h1>{{ this.customer()?.name }}</h1>
+      <address class="customer-details">
+        <div>
+          <strong>Address:</strong> {{ this.customer()?.street }} {{ this.customer()?.city }} {{ this.customer()?.postCode }}
+        </div>
+        <div><strong>Contact:</strong>
+          {{ this.customer()?.email }}
+           {{ this.customer()?.telephone || this.customer()?.mobile }}
+        </div>
+      </address>
     }
-    <h1>{{getTotalBalance() | currency}}</h1>
+    <h1>Total Balance: {{ totalBalance() | currency }}</h1>
+    <h3>{{ getSelectedInvoiceBalance() | currency }}</h3>
     <table mat-table [dataSource]="dataSource.data"
-           matSort
            class="mat-elevation-z8"
            (mousedown)="onMouseDown($event)"
            (mousemove)="onMouseMove($event)"
@@ -61,57 +61,56 @@ import {SelectionModel} from '@angular/cdk/collections';
 
       <!-- Invoice Date Column -->
       <ng-container matColumnDef="invoiceDate">
-
-        <th mat-header-cell *matHeaderCellDef mat-sort-header> Invoice Date </th>
-        <td mat-cell *matCellDef="let item"> {{ item.invoiceDate | date: 'dd MMM yyyy' }} </td>
+        <th mat-header-cell *matHeaderCellDef> Invoice Date</th>
+        <td mat-cell *matCellDef="let item"> {{ item.invoiceDate | date: 'dd MMM yyyy' }}</td>
       </ng-container>
 
       <!-- Invoice ID Column -->
       <ng-container matColumnDef="sInvoiceId">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header> Invoice ID </th>
-        <td mat-cell *matCellDef="let item"> {{ item.sInvoiceId }} </td>
+        <th mat-header-cell *matHeaderCellDef> Invoice ID</th>
+        <td mat-cell *matCellDef="let item"> {{ item.sInvoiceId }}</td>
       </ng-container>
 
       <!-- Job Card Number Column -->
       <ng-container matColumnDef="jobCardNumber">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header> Job Card Number </th>
-        <td mat-cell *matCellDef="let item"> {{ item.jobCardNumber }} </td>
+        <th mat-header-cell *matHeaderCellDef> Job Card Number</th>
+        <td mat-cell *matCellDef="let item"> {{ item.jobCardNumber }}</td>
       </ng-container>
 
       <!-- Purchase Order Column -->
       <ng-container matColumnDef="purchaseOrder">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header> Purchase Order </th>
-        <td mat-cell *matCellDef="let item"> {{ item.purchaseOrder }} </td>
+        <th mat-header-cell *matHeaderCellDef> Purchase Order</th>
+        <td mat-cell *matCellDef="let item"> {{ item.purchaseOrder }}</td>
       </ng-container>
 
       <!-- Due Date Column -->
       <ng-container matColumnDef="dueDate">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header> Due Date </th>
-        <td mat-cell *matCellDef="let item"> {{ item.dueDate | date: 'dd MMM yyyy' }} </td>
+        <th mat-header-cell *matHeaderCellDef> Due Date</th>
+        <td mat-cell *matCellDef="let item"> {{ item.dueDate | date: 'dd MMM yyyy' }}</td>
       </ng-container>
 
       <!-- Invoice Total Column -->
       <ng-container matColumnDef="invoiceTotal">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header> Invoice Total </th>
-        <td mat-cell *matCellDef="let item"> {{ item.invoiceTotal | currency }} </td>
+        <th mat-header-cell *matHeaderCellDef> Invoice Total</th>
+        <td mat-cell *matCellDef="let item"> {{ item.invoiceTotal | currency }}</td>
       </ng-container>
 
       <!-- Payments Column -->
       <ng-container matColumnDef="payments">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header> Payments </th>
-        <td mat-cell *matCellDef="let item"> {{ item.payments | currency }} </td>
+        <th mat-header-cell *matHeaderCellDef> Payments</th>
+        <td mat-cell *matCellDef="let item"> {{ item.payments | currency }}</td>
       </ng-container>
 
       <!-- Credits Column -->
       <ng-container matColumnDef="credits">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header> Credits </th>
-        <td mat-cell *matCellDef="let item"> {{ item.credits | currency }} </td>
+        <th mat-header-cell *matHeaderCellDef> Credits</th>
+        <td mat-cell *matCellDef="let item"> {{ item.credits | currency }}</td>
       </ng-container>
 
       <!-- Balance Column -->
       <ng-container matColumnDef="balance">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header> Balance </th>
-        <td mat-cell *matCellDef="let item"> {{ item.balance | currency }} </td>
+        <th mat-header-cell *matHeaderCellDef> Balance</th>
+        <td mat-cell *matCellDef="let item"> {{ item.balance | currency }}</td>
       </ng-container>
 
       <!-- Header and Row Declarations -->
@@ -146,17 +145,9 @@ import {SelectionModel} from '@angular/cdk/collections';
       ); /* Light green highlight during drag */
     }
 
-    .total-weight {
-      margin-bottom: 16px;
-      padding: 12px;
-      background-color: #f5f5f5;
-      border-radius: 4px;
-      font-size: 16px;
-      font-weight: 500;
-    }
   `
 })
-export class CustomerDetailComponent implements  OnInit {
+export class CustomerDetailComponent implements  OnInit, OnDestroy {
   router = inject(Router);
   route = inject(ActivatedRoute);
 
@@ -180,17 +171,19 @@ export class CustomerDetailComponent implements  OnInit {
   ];
   dataSource: MatTableDataSource<CustomerInvoicesViewModel> =
     new MatTableDataSource<CustomerInvoicesViewModel>([]);
-  @ViewChild(MatSort, {static: true})
-  sort!: MatSort;
 
   selection = new SelectionModel<CustomerInvoicesViewModel>(true, []);
-
   isDragging = false;
   startRowIndex: number | null = null;
   endRowIndex: number | null = null;
 
-
+  constructor() {
+    effect(() => {
+      this.dataSource.data = this.invoiceTransactions();
+    });
+  }
   ngOnInit() {
+
     const customerId = this.getCustomerIdFromParams(this.route.snapshot.paramMap);
     const getCustomerDetails$ = this.customerService.getById(customerId);
     const getInvoiceTransactions$ =
@@ -206,8 +199,7 @@ export class CustomerDetailComponent implements  OnInit {
         )
         .subscribe({
           next: (data:CustomerInvoicesViewModel[]) => {
-            this.dataSource.data = data;
-            this.dataSource.sort = this.sort;
+            this.invoiceTransactions.set(data);
           },
           error: (err) => {
             console.error('Error fetching data: ', err);
@@ -216,14 +208,24 @@ export class CustomerDetailComponent implements  OnInit {
     );
   }
 
+  ngOnDestroy() {
+    this.subs$.unsubscribe();
+  }
+
   private getCustomerIdFromParams(params: ParamMap): number {
     return parseInt(params.get('id') ?? '0', 10);
   }
 
-  getTotalBalance(): number {
+  totalBalance:Signal<number> = computed(() =>
+    this.invoiceTransactions()
+      .map(row => row.balance)
+      .reduce((sum, balance) => sum + balance, 0)
+  );
+
+  getSelectedInvoiceBalance(){
     return this.selection.selected
       .map(row => row.balance)
-      .reduce((sum, weight) => sum + weight, 0);
+      .reduce((sum, balance) => sum + balance, 0);
   }
 
   onRowClick(event: MouseEvent, row: CustomerInvoicesViewModel) {
