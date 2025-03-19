@@ -1,139 +1,156 @@
-import {AfterViewInit, Component, inject, OnInit, ViewChild, input, Input} from '@angular/core';
-import {MatTableDataSource, MatTableModule} from '@angular/material/table';
-import { MatPaginatorModule} from '@angular/material/paginator';
-import {MatSort, MatSortModule, Sort} from '@angular/material/sort';
-import {MatFormFieldModule} from '@angular/material/form-field';
-import {MatInputModule} from '@angular/material/input';
+import {Component, OnInit, Input} from '@angular/core';
+
+import {Column} from '../core/models';
+import {CommonModule, NgClass, NgForOf, NgIf} from '@angular/common';
 import {FormsModule} from '@angular/forms';
-import {TitleCasePipe} from '@angular/common';
-import {LiveAnnouncer} from '@angular/cdk/a11y';
+
+
 
 @Component({
   selector: 'app-datatable',
   imports: [
-    MatTableModule,
-    MatPaginatorModule,
-    MatSortModule,
-    MatFormFieldModule,
-    MatInputModule,
+    CommonModule,
+    NgForOf,
     FormsModule,
-    TitleCasePipe,
+    NgIf,
+    NgClass
   ],
   template: `
-    <div class="table-container">
-      <mat-form-field appearance="outline" class="filter-field">
-        <mat-label>Filter</mat-label>
-        <input
-          matInput
-          [(ngModel)]="filterText"
-          (input)="applyFilter()"
-          placeholder="Filter data"
-        />
-      </mat-form-field>
-
-      <div class="table-wrapper">
-        <!-- Angular Material Table -->
-        <table
-          mat-table
-          [dataSource]="tableDataSource"
-          matSort
-          (matSortChange)="announceSortChange($event)"
-          class="mat-elevation-z8 full-height"
-        >
-          <!-- Dynamically Generated Columns -->
-          @for(column of displayedColumns();track column) {
-            <ng-container matColumnDef="{{column}}">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                {{ column | titlecase }}
-              </th>
-              <td mat-cell *matCellDef="let element"> {{ element[column] }} </td>
-            </ng-container>
-          }
-
-
-          <!-- Header Row -->
-          <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
-          <!-- Data Rows -->
-          <tr mat-row *matRowDef="let row; columns: displayedColumns()"></tr>
-        </table>
-      </div>
-
-      <mat-paginator
-        [pageSize]="5"
-        [pageSizeOptions]="[5, 10, 20]"
-        showFirstLastButtons
-      ></mat-paginator>
+    <div class="search-container">
+      <input type="text" placeholder="Search..." [(ngModel)]="searchTerm">
     </div>
+
+    <table>
+      <thead>
+      <tr>
+        <th class="checkbox-cell">
+          <input type="checkbox" (change)="toggleSelectAll($event)" [checked]="isAllSelected()">
+        </th>
+        <th *ngFor="let column of columns" (click)="sortData(column.key)">
+          {{ column.label }}
+          <span *ngIf="sortedColumn === column.key">
+          {{ sortDirection ? '▲' : '▼' }}
+        </span>
+        </th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let row of sortedFilteredData(); let i = index"
+          [ngClass]="{'selected': isRowSelected(row.id)}"
+          (click)="toggleRowSelection(row.id, $event)">
+        <td class="checkbox-cell">
+          <input type="checkbox" (click)="toggleRowSelection(row.id, $event)" [checked]="isRowSelected(row.id)">
+        </td>
+        <td *ngFor="let column of columns">
+          <span *ngIf="column.type === 'button'">
+            <button (click)="column.action?.(row)">
+              {{ column.label }}
+            </button>
+          </span>
+          <span *ngIf="column.type !== 'button'">
+            {{ row[column.key] }}
+          </span>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+
   `,
   styles: `
-    .table-container {
-      display: flex;
-      flex-direction: column;
-      height: 100%; // Fills available vertical space
-      width: 100%; // Fills available horizontal space
-      overflow: hidden;
 
-      .filter-field {
-        width: 100%;
-      }
 
-      .table-wrapper {
-        flex: 1; // Allows the table to grow and fill available space
-        overflow: auto; // Make the table scrollable
-
-        table {
-          width: 100%;
-          min-width: 600px; // Ensures a minimum width for responsiveness
-        }
-
-        th.mat-header-cell {
-          background-color: #f5f5f5; // Sticky header background color
-          position: sticky;
-          top: 0;
-          z-index: 2; // Ensure the header is above the body
-        }
-      }
-
-      mat-paginator {
-        flex-shrink: 0; // Ensure the paginator is always visible and doesn’t collapse
-      }
-    }
   `
 })
-export class DatatableComponent<T> implements OnInit, AfterViewInit {
-  readonly dataSource = input<T[]>([]); // Input data as a generic array
-   displayedColumns = input<string[]>([]);
+export class DatatableComponent implements OnInit {
+  @Input() columns: Column[] = [];
+  @Input() dataSource: any[] = [];
 
-// rated columns
-  tableDataSource = new MatTableDataSource<T>();
+  sortedColumn: string = '';
+  sortDirection: boolean = true;
+  searchTerm: string = '';
+  selectedRowIds: Set<number> = new Set();
+  lastSelectedRowId: number | null = null;
 
-  @ViewChild(MatSort) sort!: MatSort;
-  filterText: string = '';
+  constructor() {}
 
-  ngOnInit(): void {
-    const dataSource = this.dataSource();
-    console.log(dataSource);
-    if (dataSource && dataSource.length > 0) {
-      this.tableDataSource.data = dataSource;
-    }
-    this.tableDataSource.sort = this.sort;
-  }
+  ngOnInit(): void {}
 
-  ngAfterViewInit(): void {
-    this.tableDataSource.sort = this.sort;
-  }
-
-  applyFilter(): void {
-    this.tableDataSource.filter = this.filterText.trim().toLowerCase();
-  }
-
-  private _liveAnnouncer = inject(LiveAnnouncer);
-  /** Announce the change in sort state for assistive technology. */
-  async announceSortChange(sortState: Sort) {
-    if (sortState.direction) {
-      await this._liveAnnouncer.announce(`Sorted ${sortState.direction}ending`);
+  sortData(columnKey: string) {
+    if (this.sortedColumn === columnKey) {
+      this.sortDirection = !this.sortDirection;
     } else {
-      await this._liveAnnouncer.announce('Sorting cleared');
+      this.sortedColumn = columnKey;
+      this.sortDirection = true;
+    }
+  }
+
+  sortedFilteredData() {
+    let filtered = this.dataSource.filter(row =>
+      Object.values(row).some(val =>
+        String(val).toString().toLowerCase().includes(this.searchTerm.toLowerCase())
+      )
+    );
+
+    if (!this.sortedColumn) return filtered;
+
+    return [...filtered].sort((a, b) => {
+      const valueA = a[this.sortedColumn] || '';
+      const valueB = b[this.sortedColumn] || '';
+
+      return this.sortDirection
+        ? valueA > valueB ? 1 : -1
+        : valueA < valueB ? 1 : -1;
+    });
+  }
+
+  isRowSelected(rowId: number) {
+    return this.selectedRowIds.has(rowId);
+  }
+
+  toggleRowSelection(rowId: number, event: MouseEvent) {
+    event.stopPropagation();
+
+    if (event.shiftKey && this.lastSelectedRowId !== null) {
+      this.selectRange(this.lastSelectedRowId, rowId);
+    } else if (event.ctrlKey || event.metaKey) {
+      this.toggleSingleRow(rowId);
+    } else {
+      this.selectedRowIds.clear();
+      this.selectedRowIds.add(rowId);
+    }
+    this.lastSelectedRowId = rowId;
+  }
+
+  toggleSingleRow(rowId: number) {
+    if (this.selectedRowIds.has(rowId)) {
+      this.selectedRowIds.delete(rowId);
+    } else {
+      this.selectedRowIds.add(rowId);
+    }
+  }
+
+  selectRange(startId: number, endId: number) {
+    const rows = this.sortedFilteredData();
+    const startIndex = rows.findIndex(row => row.id === startId);
+    const endIndex = rows.findIndex(row => row.id === endId);
+    if (startIndex === -1 || endIndex === -1) return;
+
+    const [min, max] = [startIndex, endIndex].sort((a, b) => a - b);
+    for (let i = min; i <= max; i++) {
+      this.selectedRowIds.add(rows[i].id);
+    }
+  }
+
+  isAllSelected() {
+    return this.selectedRowIds.size === this.dataSource.length;
+  }
+
+  toggleSelectAll(event: any) {
+    if (event.target.checked) {
+      this.selectedRowIds = new Set(this.dataSource.map(row => row.id));
+    } else {
+      this.selectedRowIds.clear();
     }
   }
 }

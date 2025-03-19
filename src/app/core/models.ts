@@ -193,3 +193,34 @@ export interface CustomerSummaryWithBalances {
   balance: number | null;
   vehicles: number | null;
 }
+
+export interface CustomerInvoicesViewModel {
+  invoiceId: number;
+  sInvoiceId: string;
+  documentType: string;
+  invoiceNumber: string;
+  invoiceDate: Date;
+  type: string;
+  dueDate: Date;
+  invoiceTotal: number;
+  payments: number;
+  credits: number;
+  balance: number;
+  isOverDue: boolean;
+  isPaid: boolean;
+  customer: string;
+  customerId: number;
+  overDueAge: number;
+  createDate: Date;
+  jobCardNumber?: number; // Nullable field
+  allocatedPayment: number;
+  purchaseOrder: string;
+  age: string; // This could be calculated on the front-end as needed
+}
+
+export interface Column {
+  key: string;
+  label: string;
+  type?: 'text' | 'button';
+  action?: (row: any) => void;
+}

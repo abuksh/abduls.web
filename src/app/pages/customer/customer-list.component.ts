@@ -1,17 +1,14 @@
-import {Component, inject, OnInit, signal} from '@angular/core';
+import {Component, inject, OnDestroy, OnInit, signal} from '@angular/core';
 import {CustomerService} from '../../core/customer.service';
 import { CustomerSummaryWithBalances} from '../../core/models';
-import {DatatableComponent} from '../../sharedcomponents/datatable.component';
 import {CurrencyPipe} from '@angular/common';
+import {Subscription} from 'rxjs';
 
 @Component({
   selector: 'app-customer-list',
-  imports: [
-    DatatableComponent,
-    CurrencyPipe
-  ],
+  imports: [CurrencyPipe],
   template: `
-    <h1>Customer</h1>
+    <h1>Customer List</h1>
     <table>
       <thead>
       <tr>
@@ -39,11 +36,8 @@ import {CurrencyPipe} from '@angular/common';
       </tbody>
     </table>
 
-   <app-datatable [dataSource]="customerBalances()"
-                   [displayedColumns]="['customerId','name','city','telephone','mobile','balance', 'vehicles']" ></app-datatable>
   `,
   styles: `
-
     .right {
       text-align: right;
     }
@@ -93,22 +87,27 @@ import {CurrencyPipe} from '@angular/common';
       text-align: left;
     }
 
-
   `
 })
-export class CustomerListComponent implements OnInit{
+export class CustomerListComponent implements OnInit, OnDestroy{
     customerService = inject(CustomerService);
+    subs$: Subscription  = new Subscription();
     customerBalances = signal<CustomerSummaryWithBalances[]>([]);
 
     ngOnInit(): void {
-      this.customerService.getCustomerAccountSummary()
-        .subscribe({
-          next:(data: CustomerSummaryWithBalances[])=> {
-            this.customerBalances.set(data);
-          },error: (err) =>{
-            console.log(err);
-          }
-        });
+      this.subs$.add(
+        this.customerService.getCustomerAccountSummary()
+          .subscribe({
+            next:(data: CustomerSummaryWithBalances[])=> {
+              this.customerBalances.set(data);
+            },error: (err) =>{
+              console.log(err);
+            }
+          }));
+    }
+
+    ngOnDestroy() {
+      this.subs$.unsubscribe();
     }
 
 }

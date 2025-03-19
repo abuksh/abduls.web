@@ -10,7 +10,7 @@ export class CustomerService {
   http: HttpClient = inject(HttpClient);
   private readonly baseUrl = 'http://localhost:5268/api/Customer';
 
-    getAll(): Observable<Customer[]>{
+  getAll(): Observable<Customer[]>{
     return this.http.get<Customer[]>(`${this.baseUrl}/GetAll`);
   }
 
@@ -18,8 +18,8 @@ export class CustomerService {
     return this.http.get<CustomerSummaryWithBalances[]>(`${this.baseUrl}/GetCustomerAccountSummary`);
   }
 
-  getDetails(customerId: number): Observable<Customer> {
-    const url = `${this.baseUrl}/GetDetails?customerId=${customerId}`;
+  getById(id: number): Observable<Customer> {
+    const url = `${this.baseUrl}/GetById/${id}`;
     return this.http.get<Customer>(url);
   }
 
@@ -45,14 +45,6 @@ export class CustomerService {
   deleteCustomer(id: number): Observable<void> {
     const url = `${this.baseUrl}/Delete?id=${id}`;
     return this.http.delete<void>(url);
-  }
-
-  /**
-   * Get invoice transactions for a customer
-   */
-  getInvoiceTransactions(customerId: number): Observable<Customer> {
-    const url = `${this.baseUrl}/GetInvoiceTransactions?customerId=${customerId}`;
-    return this.http.get<Customer>(url);
   }
 
   /**
