@@ -199,6 +199,7 @@ export interface CustomerInvoicesViewModel {
   sInvoiceId: string;
   documentType: string;
   invoiceNumber: string;
+  allocateToInvoice: number;
   invoiceDate: Date;
   type: string;
   dueDate: Date;
@@ -208,7 +209,7 @@ export interface CustomerInvoicesViewModel {
   balance: number;
   isOverDue: boolean;
   isPaid: boolean;
-  customer: string;
+  customer: Customer;
   customerId: number;
   overDueAge: number;
   createDate: Date;
@@ -223,4 +224,15 @@ export interface Column {
   label: string;
   type?: 'text' | 'button';
   action?: (row: any) => void;
+}
+
+
+export interface CustomerAging {
+  current: number;
+  _30_days: number;
+  _60_days: number;
+  _60Plus_days: number;
+  balance: number;
+  customerId: number;
+  customerName: string;
 }

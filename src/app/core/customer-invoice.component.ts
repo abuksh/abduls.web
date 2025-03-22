@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import {CustomerInvoicesViewModel} from './models';
+import {CustomerAging, CustomerInvoicesViewModel} from './models';
 
 // Models for request and response
 export interface StatementParam {
@@ -83,7 +83,7 @@ export class CustomerInvoiceService {
   getInvoiceTransactions(
     customerId: number,
     paid: boolean = false
-  ): Observable<CustomerInvoicesViewModel[]> {
+  ): Observable<any> {
     const url = `${this.baseUrl}/GetInvoiceTransactions/${customerId}/${paid}`;
     return this.http.get<CustomerInvoicesViewModel[]>(url);
   }
