@@ -7,7 +7,7 @@ import {Customer, CustomerAging, CustomerInvoicesViewModel} from '../../core/mod
 import { MatTableModule} from '@angular/material/table';
 import {MatCheckboxModule} from '@angular/material/checkbox';
 import {CustomerInvoiceListComponent} from './customer-invoice-list.component';
-import {CurrencyPipe} from '@angular/common';
+import {CurrencyPipe, NgForOf, NgIf} from '@angular/common';
 import {CustomerInvoiceAgingViewComponent} from './customer-invoice-aging-view.component';
 
 @Component({
@@ -18,35 +18,37 @@ import {CustomerInvoiceAgingViewComponent} from './customer-invoice-aging-view.c
     CustomerInvoiceListComponent,
     CurrencyPipe,
     CustomerInvoiceAgingViewComponent,
+    NgIf,
+    NgForOf,
   ],
   template: `
-    @if (customer()) {
-      <h1>{{ this.customer()?.name }}</h1>
+    <ng-container *ngIf="customer() as customer">
+      <h1>{{ customer.name }}</h1>
       <address class="customer-details">
         <div>
-          <strong>Address:</strong> {{ this.customer()?.street }} {{ this.customer()?.city }} {{ this.customer()?.postCode }}
+          <strong>Address:</strong> {{ customer.street }} {{ customer.city }} {{ customer.postCode }}
         </div>
-        <div><strong>Contact:</strong>
-          {{ this.customer()?.email }}
-           {{ this.customer()?.telephone || this.customer()?.mobile }}
+        <div>
+          <strong>Contact:</strong>
+          {{ customer.email }}
+          {{ customer.telephone || customer.mobile }}
         </div>
       </address>
-    }
+    </ng-container>
 
     <app-customer-invoice-aging-view [agingData]="agingData()"></app-customer-invoice-aging-view>
-   <app-customer-invoice-list [invoices]="invoiceTransactions()" (selectedInvoices)="onSelectedInvoicesChange($event)"></app-customer-invoice-list>
+    <app-customer-invoice-list
+      [invoices]="invoiceTransactions()"
+      (selectedInvoices)="onSelectedInvoicesChange($event)">
+    </app-customer-invoice-list>
 
-    @if (selectedInvoices.length > 0) {
-      <div class="selected-invoices">
-        <ul>
-          @for(invoice of selectedInvoices; track invoice.invoiceId) {
-            <li>
-              {{invoice.invoiceNumber}} - {{invoice.customer.name}} - Balance: {{invoice.balance | currency}}
-            </li>
-          }
-        </ul>
-      </div>
-    }
+    <div *ngIf="selectedInvoices.length > 0" class="selected-invoices">
+      <ul>
+        <li *ngFor="let invoice of selectedInvoices">
+          {{ invoice.invoiceNumber }} - {{ invoice.customer.name }} - Balance: {{ invoice.balance | currency }}
+        </li>
+      </ul>
+    </div>
 
   `,
   styles: `
@@ -90,6 +92,7 @@ export class CustomerDetailComponent implements  OnInit, OnDestroy {
           },
           error: (err) => {
             console.error('Error fetching data: ', err);
+            alert('An error occurred while fetching customer data');
           },
         })
     );
