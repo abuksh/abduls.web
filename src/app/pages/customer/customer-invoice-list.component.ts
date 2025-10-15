@@ -71,9 +71,9 @@ import {CustomerInvoicesViewModel} from '../../core/models';
         </ng-container>
 
         <!-- Allocation To Invoice Column -->
-        <ng-container matColumnDef="allocateToInvoice">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Allocate to Invoice</th>
-          <td mat-cell *matCellDef="let element" [class.sorted-column]="isSortedColumn('allocateToInvoice')">{{element.allocateToInvoice }}</td>
+        <ng-container matColumnDef="jobCardNumber">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Job Card</th>
+          <td mat-cell *matCellDef="let element" [class.sorted-column]="isSortedColumn('jobCardNumber')">{{element.jobCardNumber }}</td>
           <td mat-footer-cell *matFooterCellDef></td>
         </ng-container>
 
@@ -87,9 +87,9 @@ import {CustomerInvoicesViewModel} from '../../core/models';
         </ng-container>
 
         <!-- Type Column -->
-        <ng-container matColumnDef="type">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
-          <td mat-cell *matCellDef="let element" [class.sorted-column]="isSortedColumn('type')">{{element.type}}</td>
+        <ng-container matColumnDef="purchaseOrder">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Purchase Order</th>
+          <td mat-cell *matCellDef="let element" [class.sorted-column]="isSortedColumn('purchaseOrder')">{{element.purchaseOrder}}</td>
           <td mat-footer-cell *matFooterCellDef></td>
         </ng-container>
 
@@ -121,14 +121,7 @@ import {CustomerInvoicesViewModel} from '../../core/models';
           <td mat-footer-cell *matFooterCellDef>{{getTotalBalances() | currency}}</td>
         </ng-container>
 
-        <!-- Overdue Column -->
-        <ng-container matColumnDef="isOverDue">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Overdue</th>
-          <td mat-cell *matCellDef="let element" [class.sorted-column]="isSortedColumn('isOverDue')">
-            <span [class.overdue]="element.isOverDue">{{element.isOverDue ? 'Yes' : 'No'}}</span>
-          </td>
-          <td mat-footer-cell *matFooterCellDef></td>
-        </ng-container>
+
 
         <!-- Actions Column -->
         <ng-container matColumnDef="actions">
@@ -275,9 +268,9 @@ export class CustomerInvoiceListComponent implements OnInit, AfterViewInit {
     'select',
     'invoiceNumber',
     'invoiceDate',
-    'allocateToInvoice',
+    'jobCardNumber',
     'dueDate',
-    'type',
+    'purchaseOrder',
     'invoiceTotal',
     'payments',
     'credits',

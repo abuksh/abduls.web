@@ -37,6 +37,7 @@ import {CustomerInvoiceAgingViewComponent} from './customer-invoice-aging-view.c
     </ng-container>
 
     <app-customer-invoice-aging-view [agingData]="agingData()"></app-customer-invoice-aging-view>
+
     <app-customer-invoice-list
       [invoices]="invoiceTransactions()"
       (selectedInvoices)="onSelectedInvoicesChange($event)">
@@ -49,7 +50,6 @@ import {CustomerInvoiceAgingViewComponent} from './customer-invoice-aging-view.c
         </li>
       </ul>
     </div>
-
   `,
   styles: `
   `
@@ -65,7 +65,6 @@ export class CustomerDetailComponent implements  OnInit, OnDestroy {
   selectedInvoices: CustomerInvoicesViewModel[] = [];
   agingData = signal<CustomerAging | null>(null);
   invoiceTransactions = signal<CustomerInvoicesViewModel[]>([]);
-
 
   onSelectedInvoicesChange(invoices: CustomerInvoicesViewModel[]) {
     this.selectedInvoices = invoices;

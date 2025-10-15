@@ -226,7 +226,6 @@ export interface Column {
   action?: (row: any) => void;
 }
 
-
 export interface CustomerAging {
   current: number;
   _30_days: number;
@@ -235,4 +234,54 @@ export interface CustomerAging {
   balance: number;
   customerId: number;
   customerName: string;
+}
+
+export interface InvoiceDto {
+  invoiceId: number;
+  serviceType: string;
+  sInvoiceId: string;
+  documentType: string;
+  allocateToInvoice: number;
+  invoiceDate: Date;
+  dueDate: Date;
+  dateJobDone?: Date | null;
+  currency: string;
+  subTotal: number;
+  taxAmount: number;
+  amount: number;
+  vehicleId?: number | null;
+  huboMeter?: number | null;
+  speedoMeter?: number | null;
+  cofDate?: Date | null;
+  jobCardNumber?: number | null;
+  comments: string;
+  emailNotes: string;
+  isPaid: boolean;
+  customerId: number;
+  lastUpdatedBy: string;
+  updatedDate: Date;
+  invoiceLineItems: InvoiceLineItemDto[];
+}
+
+export interface InvoiceLineItemDto {
+  invoiceLineItemId: number;
+  quantity: number;
+  unitPrice: number;
+  lineItemDescription: string;
+  amount: number;
+  baseUnitOfMeasureId: number;
+  baseUnitOfMeasureName?: string;
+  invoiceId: number;
+  invoiceHeaderDetails?: string;
+  inventoryId: number;
+  inventoryName?: string;
+  rego?: string;
+  changeState: LineItemChangeState;
+}
+
+export enum LineItemChangeState {
+  Unchanged = "Unchanged",
+  Added = "Added",
+  Modified = "Modified",
+  Deleted = "Deleted"
 }
