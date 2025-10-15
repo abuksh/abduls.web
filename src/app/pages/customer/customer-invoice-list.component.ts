@@ -238,7 +238,7 @@ import {CustomerInvoicesViewModel} from '../../core/models';
 
     /* Button styling */
     .mat-mdc-icon-button {
-      --mdc-icon-button-state-layer-size: 36px;
+      --mat-icon-button-state-layer-size: 36px;
       padding: 6px;
       width: 36px;
       height: 36px;
