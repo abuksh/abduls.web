@@ -7,7 +7,7 @@ import {Customer, CustomerAging, CustomerInvoicesViewModel} from '../../core/mod
 import { MatTableModule} from '@angular/material/table';
 import {MatCheckboxModule} from '@angular/material/checkbox';
 import {CustomerInvoiceListComponent} from './customer-invoice-list.component';
-import {CurrencyPipe, NgForOf, NgIf} from '@angular/common';
+import { CurrencyPipe } from '@angular/common';
 import {CustomerInvoiceAgingViewComponent} from './customer-invoice-aging-view.component';
 
 @Component({
@@ -17,12 +17,10 @@ import {CustomerInvoiceAgingViewComponent} from './customer-invoice-aging-view.c
     MatCheckboxModule,
     CustomerInvoiceListComponent,
     CurrencyPipe,
-    CustomerInvoiceAgingViewComponent,
-    NgIf,
-    NgForOf,
-  ],
+    CustomerInvoiceAgingViewComponent
+],
   template: `
-    <ng-container *ngIf="customer() as customer">
+    @if (customer(); as customer) {
       <h1>{{ customer.name }}</h1>
       <address class="customer-details">
         <div>
@@ -34,23 +32,27 @@ import {CustomerInvoiceAgingViewComponent} from './customer-invoice-aging-view.c
           {{ customer.telephone || customer.mobile }}
         </div>
       </address>
-    </ng-container>
-
+    }
+    
     <app-customer-invoice-aging-view [agingData]="agingData()"></app-customer-invoice-aging-view>
-
+    
     <app-customer-invoice-list
       [invoices]="invoiceTransactions()"
       (selectedInvoices)="onSelectedInvoicesChange($event)">
     </app-customer-invoice-list>
-
-    <div *ngIf="selectedInvoices.length > 0" class="selected-invoices">
-      <ul>
-        <li *ngFor="let invoice of selectedInvoices">
-          {{ invoice.invoiceNumber }} - {{ invoice.customer.name }} - Balance: {{ invoice.balance | currency }}
-        </li>
-      </ul>
-    </div>
-  `,
+    
+    @if (selectedInvoices.length > 0) {
+      <div class="selected-invoices">
+        <ul>
+          @for (invoice of selectedInvoices; track invoice) {
+            <li>
+              {{ invoice.invoiceNumber }} - {{ invoice.customer.name }} - Balance: {{ invoice.balance | currency }}
+            </li>
+          }
+        </ul>
+      </div>
+    }
+    `,
   styles: `
   `
 })

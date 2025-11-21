@@ -23,6 +23,7 @@ import {KENDO_GRID} from '@progress/kendo-angular-grid';
   ],
   template: `
     <h1>Customer List</h1>
+    <p>Click on the customer name link to view details. To see supplier customer line items click on the amount link.</p>
 
     <h3>Total Balance: {{ totalBalance() | currency }}</h3>
 
