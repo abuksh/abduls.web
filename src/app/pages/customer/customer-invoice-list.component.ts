@@ -1,247 +1,114 @@
-import {AfterViewInit, Component, effect, input, OnInit, output, ViewChild} from '@angular/core';
-import {MatTableDataSource, MatTableModule} from '@angular/material/table';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { CurrencyPipe, DatePipe} from '@angular/common';
-import {MatSort, MatSortModule, Sort} from '@angular/material/sort';
-import {MatButtonModule} from '@angular/material/button';
-import {MatIconModule} from '@angular/material/icon';
-import {SelectionModel} from '@angular/cdk/collections';
+import {AfterViewInit, Component, input, OnInit, output} from '@angular/core';
+import {CurrencyPipe, DatePipe, NgIf} from '@angular/common';
+import { GridModule } from '@progress/kendo-angular-grid';
 import {CustomerInvoicesViewModel} from '../../core/models';
 
 @Component({
   selector: 'app-customer-invoice-list',
+  standalone: true,
   imports: [
-    MatTableModule,
-    MatCheckboxModule,
-    MatSortModule,
-    MatButtonModule,
-    MatIconModule,
+    GridModule,
     CurrencyPipe,
-    DatePipe
+    DatePipe,
+    NgIf,
   ],
   template: `
     <div class="total-weight">
       Total Balance of Selected Invoices: {{getTotalBalance() | currency}}
     </div>
 
-    <div class="table-container">
-      <table mat-table [dataSource]="dataSource" matSort (matSortChange)="onSortChange($event)" class="mat-elevation-z8">
-        <!-- Checkbox Column -->
-        <ng-container matColumnDef="select">
-          <th mat-header-cell *matHeaderCellDef>
-            <mat-checkbox
-              (change)="$event ? toggleAllRows() : null"
-              [checked]="selection.hasValue() && isAllSelected()"
-              [indeterminate]="selection.hasValue() && !isAllSelected()"
-              [aria-label]="checkboxLabel()"
-            >
-            </mat-checkbox>
-          </th>
-          <td mat-cell *matCellDef="let row">
-            <mat-checkbox
-              (click)="$event.stopPropagation()"
-              (change)="$event ? selection.toggle(row) : null"
-              [checked]="selection.isSelected(row)"
-              [aria-label]="checkboxLabel(row)"
-            >
-            </mat-checkbox>
-          </td>
-          <td mat-footer-cell *matFooterCellDef></td>
-        </ng-container>
+    <div class="grid-container">
+      <kendo-grid
+        [kendoGridBinding]="invoices()"
+        [sortable]="true"
+        [filterable]="true"
+        [resizable]="true"
+        [selectable]="{ enabled: true, mode: 'multiple', checkboxOnly: true }"
+        [selectedKeys]="selectedKeys"
+        [kendoGridSelectBy]="'invoiceId'"
+        (selectedKeysChange)="onSelectedKeysChange($event)"
+      >
+        <kendo-grid-checkbox-column [width]="50" [showSelectAll]="true"></kendo-grid-checkbox-column>
 
-        <!-- Invoice Number Column -->
-        <ng-container matColumnDef="invoiceNumber">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Invoice No.</th>
-          <td mat-cell *matCellDef="let element" [class.sorted-column]="isSortedColumn('invoiceNumber')">{{element.invoiceNumber}}</td>
-          <td mat-footer-cell *matFooterCellDef>Total</td>
-        </ng-container>
+        <kendo-grid-column field="invoiceNumber" title="Invoice No."></kendo-grid-column>
 
-        <!-- Customer Name Column -->
-        <ng-container matColumnDef="customerName">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Customer</th>
-          <td mat-cell *matCellDef="let element" [class.sorted-column]="isSortedColumn('customerName')">{{element.customer.name}}</td>
-          <td mat-footer-cell *matFooterCellDef></td>
-        </ng-container>
+        <kendo-grid-column field="invoiceDate" title="Invoice Date" filter="date" >
+          <ng-template kendoGridCellTemplate let-dataItem>
+            {{ dataItem.invoiceDate | date:'dd MMM yy' }}
+          </ng-template>
+        </kendo-grid-column>
 
-        <!-- Invoice Date Column -->
-        <ng-container matColumnDef="invoiceDate">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Invoice Date</th>
-          <td mat-cell *matCellDef="let element" [class.sorted-column]="isSortedColumn('invoiceDate')">{{element.invoiceDate | date:'dd MMM yy'}}</td>
-          <td mat-footer-cell *matFooterCellDef></td>
-        </ng-container>
+        <kendo-grid-column field="jobCardNumber" title="Job Card"></kendo-grid-column>
 
-        <!-- Allocation To Invoice Column -->
-        <ng-container matColumnDef="jobCardNumber">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Job Card</th>
-          <td mat-cell *matCellDef="let element" [class.sorted-column]="isSortedColumn('jobCardNumber')">{{element.jobCardNumber }}</td>
-          <td mat-footer-cell *matFooterCellDef></td>
-        </ng-container>
+        <kendo-grid-column field="dueDate" title="Due Date" filter="date">
+          <ng-template kendoGridCellTemplate let-dataItem>
+            {{ dataItem.dueDate | date:'dd MMM yy' }}
+          </ng-template>
+        </kendo-grid-column>
 
+        <kendo-grid-column field="purchaseOrder" title="Purchase Order"></kendo-grid-column>
 
+        <kendo-grid-column field="invoiceTotal" title="Total" filter="numeric" >
+          <ng-template kendoGridCellTemplate let-dataItem>
+            {{ dataItem.invoiceTotal | currency }}
+          </ng-template>
+          <ng-template kendoGridFooterTemplate>
+            {{ getTotalInvoiceTotal() | currency }}
+          </ng-template>
+        </kendo-grid-column>
 
-        <!-- Due Date Column -->
-        <ng-container matColumnDef="dueDate">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Due Date</th>
-          <td mat-cell *matCellDef="let element" [class.sorted-column]="isSortedColumn('dueDate')">{{element.dueDate | date:'dd MMM yy'}}</td>
-          <td mat-footer-cell *matFooterCellDef></td>
-        </ng-container>
+        <kendo-grid-column field="payments" title="Payments" filter="numeric">
+          <ng-template kendoGridCellTemplate let-dataItem>
+            {{ dataItem.payments | currency }}
+          </ng-template>
+          <ng-template kendoGridFooterTemplate>
+            {{ getTotalPayments() | currency }}
+          </ng-template>
+        </kendo-grid-column>
 
-        <!-- Type Column -->
-        <ng-container matColumnDef="purchaseOrder">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Purchase Order</th>
-          <td mat-cell *matCellDef="let element" [class.sorted-column]="isSortedColumn('purchaseOrder')">{{element.purchaseOrder}}</td>
-          <td mat-footer-cell *matFooterCellDef></td>
-        </ng-container>
+        <kendo-grid-column field="credits" title="Credits" filter="numeric">
+          <ng-template kendoGridCellTemplate let-dataItem>
+            {{ dataItem.credits | currency }}
+          </ng-template>
+        </kendo-grid-column>
 
-        <!-- Invoice Total Column -->
-        <ng-container matColumnDef="invoiceTotal">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Total</th>
-          <td mat-cell *matCellDef="let element" [class.sorted-column]="isSortedColumn('invoiceTotal')">{{element.invoiceTotal | currency}}</td>
-          <td mat-footer-cell *matFooterCellDef>{{getTotalInvoiceTotal() | currency}}</td>
-        </ng-container>
+        <kendo-grid-column field="balance" title="Balance" filter="numeric">
+          <ng-template kendoGridCellTemplate let-dataItem>
+            {{ dataItem.balance | currency }}
+          </ng-template>
+          <ng-template kendoGridFooterTemplate>
+            {{ getTotalBalances() | currency }}
+          </ng-template>
+        </kendo-grid-column>
 
-        <!-- Payments Column -->
-        <ng-container matColumnDef="payments">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Payments</th>
-          <td mat-cell *matCellDef="let element" [class.sorted-column]="isSortedColumn('payments')">{{element.payments | currency}}</td>
-          <td mat-footer-cell *matFooterCellDef>{{getTotalPayments() | currency}}</td>
-        </ng-container>
+        <kendo-grid-column field="isOverDue" title="">
+          <ng-template kendoGridCellTemplate let-dataItem>
+            @if(dataItem.isOverDue) {
+              <span class="overdue">Overdue</span>
+            } @else if(dataItem.isPaid) {
+              <span></span>
+            }
+          </ng-template>
+        </kendo-grid-column>
 
-        <!-- credits Column -->
-        <ng-container matColumnDef="credits">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Credits</th>
-          <td mat-cell *matCellDef="let element" [class.sorted-column]="isSortedColumn('credits')">{{element.credits | currency}}</td>
-          <td mat-footer-cell *matFooterCellDef></td>
-        </ng-container>
+        <kendo-grid-column title="Actions" [width]="90">
+          <ng-template kendoGridCellTemplate let-dataItem>
+            <button class="view-btn" (click)="onViewDetails(dataItem)">View</button>
+          </ng-template>
+        </kendo-grid-column>
 
-        <!-- Balance Column -->
-        <ng-container matColumnDef="balance">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Balance</th>
-          <td mat-cell *matCellDef="let element" [class.sorted-column]="isSortedColumn('balance')">{{element.balance | currency}}</td>
-          <td mat-footer-cell *matFooterCellDef>{{getTotalBalances() | currency}}</td>
-        </ng-container>
-
-
-
-        <!-- Actions Column -->
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let element">
-            <button mat-icon-button color="primary" (click)="onViewDetails(element)" aria-label="View details">
-              <mat-icon>visibility</mat-icon>
-            </button>
-          </td>
-          <td mat-footer-cell *matFooterCellDef></td>
-        </ng-container>
-
-        <!-- Header and Row Definitions -->
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr
-          mat-row
-          *matRowDef="let row; columns: displayedColumns;"
-          [class.selected]="selection.isSelected(row)"
-        ></tr>
-        <tr mat-footer-row *matFooterRowDef="displayedColumns; sticky: true"></tr>
-      </table>
+      </kendo-grid>
     </div>
   `,
   styles: `
-    table {
-      width: 100%;
-    }
-
-    .table-container {
+    .grid-container {
       height: calc(100vh - 110px); /* Account for padding and total balance */
-      overflow: auto;
+      display: flex;
+      flex-direction: column;
     }
 
-    .mat-mdc-table {
-      min-width: 100%;
-    }
-
-    .mat-mdc-header-row {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .mat-mdc-footer-row {
-      position: sticky;
-      bottom: 0;
-      z-index: 100;
-      height: 48px;
-      background-color: #f1f3f4;
-      font-weight: 500;
-    }
-
-    .mat-mdc-row {
-      height: 40px;
-      transition: box-shadow .08s linear,min-width .15s cubic-bezier(0.4,0.0,0.2,1);
-    }
-
-    .mat-mdc-row:hover {
-      box-shadow: inset 1px 0 0 #dadce0, inset -1px 0 0 #dadce0, 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
-      z-index: 1;
-    }
-
-    .mat-mdc-cell, .mat-mdc-header-cell, .mat-mdc-footer-cell {
-      padding: 0 16px;
-      font-size: 14px;
-      border-bottom: 1px solid #e0e0e0;
-      color: #202124;
-    }
-
-    .mat-mdc-header-cell {
-      color: #5f6368;
-      font-weight: 500;
-      font-size: 12px;
-      letter-spacing: 0.3px;
-    }
-
-
-    .mat-column-select {
-      width: 54px;
-      padding: 0 0 0 16px;
-    }
-
-    .mat-column-invoiceNumber {
-      font-weight: 500;
-    }
-
-    .mat-column-invoiceTotal,
-    .mat-column-payments,
-    .mat-column-balance {
-      text-align: right;
-    }
-
-    .mat-column-actions {
-      width: 48px;
-      padding-right: 8px;
-    }
-
-    .mat-mdc-checkbox .mdc-checkbox:hover {
-      background-color: rgba(32,33,36,.059);
-    }
-
-    .mat-mdc-checkbox .mdc-checkbox__background {
-      border-color: #5f6368;
-    }
-
-    /* Sort header styling */
-    .mat-sort-header-container {
-      justify-content: inherit;
-    }
-
-    .mat-sort-header-arrow {
-      color: #5f6368;
-    }
-
-    /* Button styling */
-    .mat-mdc-icon-button {
-      --mat-icon-button-state-layer-size: 36px;
-      padding: 6px;
-      width: 36px;
-      height: 36px;
+    .k-grid {
+      flex: 1 1 auto;
     }
 
     .overdue {
@@ -249,14 +116,10 @@ import {CustomerInvoicesViewModel} from '../../core/models';
       font-weight: 500;
     }
 
-
-    .selected {
-      background-color: #f2f6fc;
-    }
-
-    /* Sorted column highlighting */
-    .sorted-column {
-      background-color: rgba(232, 240, 254, 0.5);
+    .view-btn {
+      padding: 4px 8px;
+      font-size: 12px;
+      cursor: pointer;
     }
   `
 })
@@ -264,113 +127,47 @@ export class CustomerInvoiceListComponent implements OnInit, AfterViewInit {
   invoices = input<CustomerInvoicesViewModel[]>([]);
   selectedInvoices = output<CustomerInvoicesViewModel[]>();
 
-  displayedColumns: string[] = [
-    'select',
-    'invoiceNumber',
-    'invoiceDate',
-    'jobCardNumber',
-    'dueDate',
-    'purchaseOrder',
-    'invoiceTotal',
-    'payments',
-    'credits',
-    'balance',
-    'isOverDue',
-    'actions'
-  ];
-  dataSource = new MatTableDataSource<CustomerInvoicesViewModel>([]);
-  selection = new SelectionModel<CustomerInvoicesViewModel>(true, []);
-  currentSortColumn: string | null = null;
+  // Kendo Grid selection keys and cache of selected rows
+  selectedKeys: Array<number> = [];
+  private selectedRows: CustomerInvoicesViewModel[] = [];
 
-  @ViewChild(MatSort) sort!: MatSort;
 
-  constructor() {
-    // Update selected invoices signal whenever selection changes
-    this.selection.changed.subscribe(() => {
-      this.selectedInvoices.emit(this.selection.selected);
-    });
+  constructor() {}
 
-    // React to changes in the invoices input signal
-    effect(() => {
-      this.dataSource.data = this.invoices();
-      this.setupSorting();
-    });
-  }
+  ngOnInit() {}
 
-  ngOnInit() {
-    this.dataSource.data = this.invoices();
-  }
+  ngAfterViewInit() {}
 
-  ngAfterViewInit() {
-    this.setupSorting();
-  }
-
-  private setupSorting() {
-    if (this.sort) {
-      this.dataSource.sort = this.sort;
-      this.dataSource.sortingDataAccessor = (item, property) => {
-        switch(property) {
-          case 'customerName':
-            return item.customer.name;
-          default:
-            return (item as any)[property];
-        }
-      };
-    }
-  }
-
-  onSortChange(sort: Sort) {
-    this.currentSortColumn = sort.direction ? sort.active : null;
-  }
-
-  isSortedColumn(columnName: string): boolean {
-    return this.currentSortColumn === columnName;
+  onSelectedKeysChange(keys: number[]) {
+    this.selectedKeys = keys;
+    // map keys back to data items for emitting
+    const data = this.invoices() || [];
+    this.selectedRows = data.filter(d => this.selectedKeys.includes(d.invoiceId));
+    this.selectedInvoices.emit(this.selectedRows);
   }
 
   getTotalBalance(): number {
-    return this.selection.selected
+    return (this.selectedRows || [])
       .map(row => row.balance)
       .reduce((sum, balance) => sum + balance, 0);
   }
 
   getTotalInvoiceTotal(): number {
-    return this.dataSource.data
+    return (this.invoices() || [])
       .map(row => row.invoiceTotal)
       .reduce((sum, total) => sum + total, 0);
   }
 
   getTotalPayments(): number {
-    return this.dataSource.data
+    return (this.invoices() || [])
       .map(row => row.payments)
       .reduce((sum, payments) => sum + payments, 0);
   }
 
   getTotalBalances(): number {
-    return this.dataSource.data
+    return (this.invoices() || [])
       .map(row => row.balance)
       .reduce((sum, balance) => sum + balance, 0);
-  }
-
-  isAllSelected() {
-    const numSelected = this.selection.selected.length;
-    const numRows = this.dataSource.data.length;
-    return numSelected === numRows;
-  }
-
-  toggleAllRows() {
-    if (this.isAllSelected()) {
-      this.selection.clear();
-      return;
-    }
-
-    this.selection.select(...this.dataSource.data);
-  }
-
-  checkboxLabel(row?: CustomerInvoicesViewModel): string {
-    if (!row) {
-      return `${this.isAllSelected() ? 'deselect' : 'select'} all`;
-    }
-    return `${this.selection.isSelected(row) ? 'deselect' : 'select'} row`;
   }
 
   onViewDetails(invoice: CustomerInvoicesViewModel) {

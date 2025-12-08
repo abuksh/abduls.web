@@ -17,6 +17,7 @@ import {KENDO_GRID} from '@progress/kendo-angular-grid';
 @Component({
   selector: 'app-customer-list',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true,
   imports: [
     CurrencyPipe,
     KENDO_GRID

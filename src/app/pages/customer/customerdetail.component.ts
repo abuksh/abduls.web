@@ -9,16 +9,19 @@ import {MatCheckboxModule} from '@angular/material/checkbox';
 import {CustomerInvoiceListComponent} from './customer-invoice-list.component';
 import { CurrencyPipe } from '@angular/common';
 import {CustomerInvoiceAgingViewComponent} from './customer-invoice-aging-view.component';
+import {MatButton} from '@angular/material/button';
 
 @Component({
   selector: 'app-customer-detail',
+  standalone: true,
   imports: [
     MatTableModule,
     MatCheckboxModule,
     CustomerInvoiceListComponent,
     CurrencyPipe,
-    CustomerInvoiceAgingViewComponent
-],
+    CustomerInvoiceAgingViewComponent,
+    MatButton
+  ],
   template: `
     @if (customer(); as customer) {
       <h1>{{ customer.name }}</h1>
@@ -33,14 +36,20 @@ import {CustomerInvoiceAgingViewComponent} from './customer-invoice-aging-view.c
         </div>
       </address>
     }
-    
+
     <app-customer-invoice-aging-view [agingData]="agingData()"></app-customer-invoice-aging-view>
-    
+
+    <h2>Invoices</h2>
+    <p>Select invoices to view details.</p>
+
+    <button mat-button mat-flat-button (click)="showInvoices(true)">Paid</button>
+    <button mat-button mat-flat-button (click)="showInvoices(false)">Unpaid</button>
+
     <app-customer-invoice-list
       [invoices]="invoiceTransactions()"
       (selectedInvoices)="onSelectedInvoicesChange($event)">
     </app-customer-invoice-list>
-    
+
     @if (selectedInvoices.length > 0) {
       <div class="selected-invoices">
         <ul>
@@ -57,9 +66,7 @@ import {CustomerInvoiceAgingViewComponent} from './customer-invoice-aging-view.c
   `
 })
 export class CustomerDetailComponent implements  OnInit, OnDestroy {
-  router = inject(Router);
   route = inject(ActivatedRoute);
-
   subs$ = new Subscription();
   customerInvoiceService = inject(CustomerInvoiceService);
   customerService = inject(CustomerService);
@@ -67,29 +74,25 @@ export class CustomerDetailComponent implements  OnInit, OnDestroy {
   selectedInvoices: CustomerInvoicesViewModel[] = [];
   agingData = signal<CustomerAging | null>(null);
   invoiceTransactions = signal<CustomerInvoicesViewModel[]>([]);
+  customerId = signal(0);
 
   onSelectedInvoicesChange(invoices: CustomerInvoicesViewModel[]) {
     this.selectedInvoices = invoices;
   }
 
   ngOnInit() {
+    this.customerId.set(this.getCustomerIdFromParams(this.route.snapshot.paramMap));
+    this.getCustomer();
+    this.showInvoices(true);
+  }
 
-    const customerId = this.getCustomerIdFromParams(this.route.snapshot.paramMap);
-    const getCustomerDetails$ = this.customerService.getById(customerId);
-    const getInvoiceTransactions$ = this.customerInvoiceService.getInvoiceTransactions(customerId, false);
-
+  getCustomer(){
+    const getCustomerDetails$ = this.customerService.getById(this.customerId());
     this.subs$.add(
       getCustomerDetails$
-        .pipe(
-          switchMap((customer) => {
-            this.customer.set(customer);
-            return getInvoiceTransactions$;
-          })
-        )
         .subscribe({
-          next: (data) => {
-            this.invoiceTransactions.set(data.invoiceTransactions);
-            this.agingData.set(data.aging);
+          next: (customer) => {
+            this.customer.set(customer);
           },
           error: (err) => {
             console.error('Error fetching data: ', err);
@@ -97,6 +100,23 @@ export class CustomerDetailComponent implements  OnInit, OnDestroy {
           },
         })
     );
+  }
+
+  showInvoices(paid: boolean = true) {
+    const invoices$ = this.customerInvoiceService.
+      getInvoiceTransactions(this.customerId(),
+      paid);
+    this.subs$.add(
+      invoices$.subscribe({
+        next: (data) => {
+          this.invoiceTransactions.set(data.invoiceTransactions);
+        },
+        error: (err) => {
+          console.error('Error fetching data: ', err);
+          alert('An error occurred while fetching customer transactions data');
+        },
+      })
+    )
   }
 
   ngOnDestroy() {

@@ -5,6 +5,7 @@ import {CurrencyPipe} from '@angular/common';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-customer-invoice-aging-view',
+  standalone: true,
   imports: [MatCardModule, CurrencyPipe],
   template: `
     @if(agingData()) {
