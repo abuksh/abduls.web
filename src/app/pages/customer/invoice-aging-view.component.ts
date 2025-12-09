@@ -86,6 +86,6 @@ import {CurrencyPipe} from '@angular/common';
   }
 `]
 })
-export class CustomerInvoiceAgingViewComponent {
+export class InvoiceAgingViewComponent {
   agingData = input.required<CustomerAging | null>();
 }

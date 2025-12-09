@@ -1,15 +1,15 @@
 import {Component,  inject, OnDestroy, OnInit,  signal} from '@angular/core';
-import {ActivatedRoute, ParamMap, Router} from '@angular/router';
+import {ActivatedRoute, ParamMap} from '@angular/router';
 import {CustomerInvoiceService} from '../../core/customer-invoice.component';
-import {Subscription, switchMap} from 'rxjs';
+import {Subscription} from 'rxjs';
 import {CustomerService} from '../../core/customer.service';
 import {Customer, CustomerAging, CustomerInvoicesViewModel} from '../../core/models';
 import { MatTableModule} from '@angular/material/table';
 import {MatCheckboxModule} from '@angular/material/checkbox';
-import {CustomerInvoiceListComponent} from './customer-invoice-list.component';
+import {InvoiceListComponent} from './invoice-list.component';
 import { CurrencyPipe } from '@angular/common';
-import {CustomerInvoiceAgingViewComponent} from './customer-invoice-aging-view.component';
 import {MatButton} from '@angular/material/button';
+import {InvoiceAgingViewComponent} from './invoice-aging-view.component';
 
 @Component({
   selector: 'app-customer-detail',
@@ -17,9 +17,9 @@ import {MatButton} from '@angular/material/button';
   imports: [
     MatTableModule,
     MatCheckboxModule,
-    CustomerInvoiceListComponent,
+    InvoiceListComponent,
     CurrencyPipe,
-    CustomerInvoiceAgingViewComponent,
+    InvoiceAgingViewComponent,
     MatButton
   ],
   template: `
@@ -42,8 +42,8 @@ import {MatButton} from '@angular/material/button';
     <h2>Invoices</h2>
     <p>Select invoices to view details.</p>
 
-    <button mat-button mat-flat-button (click)="showInvoices(true)">Paid</button>
-    <button mat-button mat-flat-button (click)="showInvoices(false)">Unpaid</button>
+    <button mat-button mat-flat-button (click)="showInvoices(false)">Unpaid Invoices</button>
+    <button mat-button mat-flat-button (click)="showInvoices(true)">Paid Invoices</button>
 
     <app-customer-invoice-list
       [invoices]="invoiceTransactions()"
@@ -65,7 +65,7 @@ import {MatButton} from '@angular/material/button';
   styles: `
   `
 })
-export class CustomerDetailComponent implements  OnInit, OnDestroy {
+export class DetailComponent implements  OnInit, OnDestroy {
   route = inject(ActivatedRoute);
   subs$ = new Subscription();
   customerInvoiceService = inject(CustomerInvoiceService);

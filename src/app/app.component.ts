@@ -13,7 +13,7 @@ import {MatIconButton} from '@angular/material/button';
       <button mat-icon-button>
         <mat-icon>menu</mat-icon>
       </button>
-      <span>Workshop System</span>
+      <span></span>
       <span class="spacer"></span>
       <button mat-icon-button class="example-icon favorite-icon" aria-label="Example icon-button with heart icon">
         <mat-icon>favorite</mat-icon>

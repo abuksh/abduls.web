@@ -1,10 +1,10 @@
 import { Routes } from '@angular/router';
 import {DashboardComponent} from './pages/dashboard/dashboard.component';
-import {CustomerListComponent} from './pages/customer/customer-list.component';
-import {CustomerDetailComponent} from './pages/customer/customerdetail.component';
 
 export const routes: Routes = [
   { path: '', component: DashboardComponent },
-  { path:'customer-list', component: CustomerListComponent},
-  { path: 'customer-detail/:id', component: CustomerDetailComponent }
+  { path: 'customer', loadComponent: () => import('./pages/customer/list.component').then(m => m.ListComponent) },
+  { path: 'customer/detail/:id', loadComponent: () => import('./pages/customer/detail.component').then(m => m.DetailComponent) },
+  { path: 'customer/create-invoice', loadComponent: () => import('./pages/customer/create-invoice.component').then(m => m.CreateInvoiceComponent) },
+  //{ path: 'path/supplier/create-invoice', loadComponent: () => import('./pages/supplier/create-invoice.component').then(m => m.CreateInvoiceComponent) }
 ];

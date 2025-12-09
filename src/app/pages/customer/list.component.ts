@@ -52,7 +52,7 @@ import {KENDO_GRID} from '@progress/kendo-angular-grid';
   styles: `
   `
 })
-export class CustomerListComponent implements OnInit, OnDestroy {
+export class ListComponent implements OnInit, OnDestroy {
   customerService = inject(CustomerService);
   subs$: Subscription = new Subscription();
 
@@ -63,7 +63,7 @@ export class CustomerListComponent implements OnInit, OnDestroy {
   constructor() {}
 
   async viewDetails(customer: CustomerSummaryWithBalances) {
-    await this.router.navigate(['/customer-detail', customer.customerId]);
+    await this.router.navigate(['/customer/detail/', customer.customerId]);
   }
 
   ngOnInit(): void {
